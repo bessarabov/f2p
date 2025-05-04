@@ -1,0 +1,10 @@
+usage: f2p [-h] [-o FILE]
+
+Output the contents of text files to STDOUT. If run without arguments, it
+outputs all UTF-8 text files in the current directory (recursively), excluding
+files under .git/. If run with -o FILE1 -o FILE2, it outputs only the
+specified files.
+
+optional arguments:
+  -h, --help  show this help message and exit
+  -o FILE     File to output (can be specified several times)

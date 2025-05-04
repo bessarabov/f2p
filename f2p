@@ -16,31 +16,57 @@ def is_text_file(filepath):
         print(f"Error reading file {filepath}: {e}", file=sys.stderr)
         return False
 
+def find_all_text_files():
+    text_files = []
+    for root, dirs, files in os.walk('.'):
+        dirs[:] = [d for d in dirs if d != '.git']  # Skip .git/
+        for filename in files:
+            full_path = os.path.join(root, filename)
+            if os.path.isfile(full_path) and is_text_file(full_path):
+                text_files.append(full_path)
+    return sorted(text_files)  # Sort alphabetically
+
 def main():
-    parser = argparse.ArgumentParser(description='Read and output contents of text files specified with -o.')
-    parser.add_argument('-o', action='append', dest='output_files', metavar='FILE', help='File to output (can be specified several times)', required=False)
+    parser = argparse.ArgumentParser(
+        description=(
+            "Output the contents of text files to STDOUT.\n\n"
+            "If run without arguments, it outputs all UTF-8 text files in the current directory (recursively), "
+            "excluding files under .git/.\n"
+            "If run with -o FILE1 -o FILE2, it outputs only the specified files."
+        )
+    )
+
+    parser.add_argument('-o', action='append', dest='output_files', metavar='FILE',
+                        help='File to output (can be specified several times)', required=False)
 
     args = parser.parse_args()
 
-    if not args.output_files:
-        print("Error: No -o option specified", file=sys.stderr)
-        sys.exit(1)
+    if args.output_files:
+        for filepath in args.output_files:
+            if not os.path.exists(filepath):
+                print(f"Error: File does not exist: {filepath}", file=sys.stderr)
+                sys.exit(1)
+            if not os.path.isfile(filepath):
+                print(f"Error: Not a file: {filepath}", file=sys.stderr)
+                sys.exit(1)
+            if not is_text_file(filepath):
+                print(f"Error: File is not a text file: {filepath}", file=sys.stderr)
+                sys.exit(1)
+
+    else:
+        args.output_files = find_all_text_files()
+        if not args.output_files:
+            print("Error: No text files found", file=sys.stderr)
+            sys.exit(1)
+
+        # Sort auto-found list
+        args.output_files = sorted(args.output_files)
 
     for filepath in args.output_files:
-        if not os.path.exists(filepath):
-            print(f"Error: File does not exist: {filepath}", file=sys.stderr)
-            sys.exit(1)
-        if not os.path.isfile(filepath):
-            print(f"Error: Not a file: {filepath}", file=sys.stderr)
-            sys.exit(1)
-        if not is_text_file(filepath):
-            print(f"Error: File is not a text file: {filepath}", file=sys.stderr)
-            sys.exit(1)
-
-    for filepath in args.output_files:
-        print(f"## {filepath}\n")
+        print(f"## {os.path.relpath(filepath)}\n")
         with open(filepath, 'r', encoding='utf-8') as f:
             print(f.read())
 
 if __name__ == '__main__':
     main()
+
