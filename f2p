@@ -28,16 +28,29 @@ def find_all_text_files():
 
 def main():
     parser = argparse.ArgumentParser(
+        usage="""
+
+    f2p
+
+or:
+
+    f2p [-o FILE]
+""",
         description=(
-            "Output the contents of text files to STDOUT.\n\n"
-            "If run without arguments, it outputs all UTF-8 text files in the current directory (recursively), "
-            "excluding files under .git/.\n"
-            "If run with -o FILE1 -o FILE2, it outputs only the specified files."
-        )
+"""
+Output the contents of text files to STDOUT.
+
+If run without arguments, it outputs all text files in
+the current directory (recursively), excluding files under .git/
+
+If run with -o FILE1 -o FILE2, it outputs only the specified files.
+"""
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
     parser.add_argument('-o', action='append', dest='output_files', metavar='FILE',
-                        help='File to output (can be specified several times)', required=False)
+                        help='Only output the specified file (can be used multiple times)', required=False)
 
     args = parser.parse_args()
 
