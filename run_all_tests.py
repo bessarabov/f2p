@@ -23,22 +23,22 @@ def run_test(test_dir):
         text=True
     )
 
-    actual_output = result.stdout.strip()
-    expected_path = os.path.join(full_path, 'expected_output')
+    actual_stdout = result.stdout.strip()
+    expected_path = os.path.join(full_path, 'expected_stdout')
 
     if os.path.exists(expected_path):
         with open(expected_path) as f:
-            expected_output = f.read().strip()
+            expected_stdout = f.read().strip()
     else:
-        expected_output = ''
+        expected_stdout = ''
 
-    if actual_output != expected_output:
+    if actual_stdout != expected_stdout:
         print(f"[FAIL] {test_dir}")
         print(cmd)
         print("Expected:")
-        print(expected_output)
+        print(expected_stdout)
         print("Actual:")
-        print(actual_output)
+        print(actual_stdout)
         return False
     else:
         print(f"[ OK ] {test_dir}")
