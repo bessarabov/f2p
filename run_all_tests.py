@@ -24,25 +24,48 @@ def run_test(test_dir):
     )
 
     actual_stdout = result.stdout.strip()
-    expected_path = os.path.join(full_path, 'expected_stdout')
+    actual_stderr = result.stderr.strip()
 
-    if os.path.exists(expected_path):
-        with open(expected_path) as f:
+    stdout_path = os.path.join(full_path, 'expected_stdout')
+    stderr_path = os.path.join(full_path, 'expected_stderr')
+
+    ok = True
+
+    if os.path.exists(stdout_path):
+        with open(stdout_path) as f:
             expected_stdout = f.read().strip()
-    else:
-        expected_stdout = ''
+        if actual_stdout != expected_stdout:
+            print(f"[FAIL] {test_dir} (stdout mismatch)")
+            print(cmd)
+            print("Expected stdout:")
+            print(expected_stdout)
+            print("Actual stdout:")
+            print(actual_stdout)
+            ok = False
 
-    if actual_stdout != expected_stdout:
-        print(f"[FAIL] {test_dir}")
-        print(cmd)
-        print("Expected:")
-        print(expected_stdout)
-        print("Actual:")
-        print(actual_stdout)
-        return False
-    else:
+    if os.path.exists(stderr_path):
+        with open(stderr_path) as f:
+            expected_stderr = f.read().strip()
+        if actual_stderr != expected_stderr:
+            print(f"[FAIL] {test_dir} (stderr mismatch)")
+            print(cmd)
+            print("Expected stderr:")
+            print(expected_stderr)
+            print("Actual stderr:")
+            print(actual_stderr)
+            ok = False
+        if result.returncode == 0:
+            print(f"[FAIL] {test_dir} (expected non-zero exit code)")
+            ok = False
+
+    if not os.path.exists(stdout_path) and not os.path.exists(stderr_path):
+        print(f"[FAIL] {test_dir} (no expected output files)")
+        ok = False
+
+    if ok:
         print(f"[ OK ] {test_dir}")
-        return True
+
+    return ok
 
 def main():
     test_dirs = [d for d in os.listdir(TESTS_DIR)
@@ -61,3 +84,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
