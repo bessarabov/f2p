@@ -7,6 +7,17 @@ import sys
 TESTS_DIR = os.path.abspath(os.path.dirname(__file__)) + '/tests/'
 F2P = os.path.abspath(os.path.join(TESTS_DIR, '..', 'f2p'))
 
+def read_file_contents(file_path):
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        return ''
+
+def write_file(file_path, content):
+    with open(file_path, 'w', encoding='utf-8') as f:
+        f.write(content)
+
 def run_test(test_dir):
     full_path = os.path.join(TESTS_DIR, test_dir)
 
@@ -23,43 +34,34 @@ def run_test(test_dir):
         text=True
     )
 
-    actual_stdout = result.stdout.strip()
-    actual_stderr = result.stderr.strip()
+    actual_stdout = result.stdout
+    actual_stderr = result.stderr
 
-    stdout_path = os.path.join(full_path, 'expected_stdout')
-    stderr_path = os.path.join(full_path, 'expected_stderr')
+    file_expected_stdout = os.path.join(full_path, 'expected_stdout')
+    file_expected_stderr = os.path.join(full_path, 'expected_stderr')
+    expected_stdout = read_file_contents(file_expected_stdout)
+    expected_stderr = read_file_contents(file_expected_stderr)
 
     ok = True
 
-    if os.path.exists(stdout_path):
-        with open(stdout_path) as f:
-            expected_stdout = f.read().strip()
-        if actual_stdout != expected_stdout:
-            print(f"[FAIL] {test_dir} (stdout mismatch)")
-            print(cmd)
-            print("Expected stdout:")
-            print(expected_stdout)
-            print("Actual stdout:")
-            print(actual_stdout)
-            ok = False
+    if actual_stdout != expected_stdout:
+        #write_file(file_expected_stdout, actual_stdout)
+        print(f"[FAIL] {test_dir} (stdout mismatch)")
+        print(cmd)
+        print("Expected stdout:")
+        print(expected_stdout)
+        print("Actual stdout:")
+        print(actual_stdout)
+        ok = False
 
-    if os.path.exists(stderr_path):
-        with open(stderr_path) as f:
-            expected_stderr = f.read().strip()
-        if actual_stderr != expected_stderr:
-            print(f"[FAIL] {test_dir} (stderr mismatch)")
-            print(cmd)
-            print("Expected stderr:")
-            print(expected_stderr)
-            print("Actual stderr:")
-            print(actual_stderr)
-            ok = False
-        if result.returncode == 0:
-            print(f"[FAIL] {test_dir} (expected non-zero exit code)")
-            ok = False
-
-    if not os.path.exists(stdout_path) and not os.path.exists(stderr_path):
-        print(f"[FAIL] {test_dir} (no expected output files)")
+    if actual_stderr != expected_stderr:
+        #write_file(file_expected_stderr, actual_stderr)
+        print(f"[FAIL] {test_dir} (stderr mismatch)")
+        print(cmd)
+        print("Expected stderr:")
+        print(expected_stderr)
+        print("Actual stderr:")
+        print(actual_stderr)
         ok = False
 
     if ok:
@@ -71,17 +73,21 @@ def main():
     test_dirs = [d for d in os.listdir(TESTS_DIR)
                  if os.path.isdir(os.path.join(TESTS_DIR, d))]
 
+    succeeded = 0
     failed = 0
     for td in sorted(test_dirs):
-        if not run_test(td):
+        if run_test(td):
+            succeeded += 1
+        else:
             failed += 1
 
     if failed:
-        print(f"\n{failed} test(s) failed.")
+        print(f"\n{succeeded} test(s) succeeded.")
+        print(f"{failed} test(s) failed.")
         sys.exit(1)
     else:
-        print("\nAll tests passed.")
+        print(f"\n{succeeded} test(s) succeeded.")
+        print("All tests passed.")
 
 if __name__ == '__main__':
     main()
-

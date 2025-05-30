@@ -75,10 +75,23 @@ If run with -o FILE1 -o FILE2, it outputs only the specified files.
         # Sort auto-found list
         args.output_files = sorted(args.output_files)
 
+    total_lines = 0
+    total_files = len(args.output_files)
+
     for filepath in args.output_files:
-        print(f"## {os.path.relpath(filepath)}\n")
-        with open(filepath, 'r', encoding='utf-8') as f:
-            print(f.read())
+        print(f"## {os.path.relpath(filepath)}")
+        print()
+
+        with open(filepath, "r", encoding="utf-8") as f:
+            for line in f:
+                print(line, end="")
+                total_lines += 1
+        print()
+        total_lines += 3
+
+    plural_f = "s" if total_files != 1 else ""
+    plural_l = "s" if total_lines != 1 else ""
+    print(f"{total_files} file{plural_f}, {total_lines} line{plural_l}", file=sys.stderr)
 
 if __name__ == '__main__':
     main()
