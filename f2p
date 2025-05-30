@@ -79,7 +79,7 @@ If run with -o FILE1 -o FILE2, it outputs only the specified files.
     total_files = len(args.output_files)
 
     for filepath in args.output_files:
-        print(f"## {os.path.relpath(filepath)}")
+        print(f"## File `{os.path.relpath(filepath)}`")
         print()
 
         with open(filepath, "r", encoding="utf-8") as f:
@@ -95,4 +95,3 @@ If run with -o FILE1 -o FILE2, it outputs only the specified files.
 
 if __name__ == '__main__':
     main()
-
