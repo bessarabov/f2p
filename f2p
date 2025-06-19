@@ -34,7 +34,7 @@ def main():
 
 or:
 
-    f2p [-o FILE]
+    f2p [FILE ...]
 """,
         description=(
 """
@@ -43,19 +43,19 @@ Output the contents of text files to STDOUT.
 If run without arguments, it outputs all text files in
 the current directory (recursively), excluding files under .git/
 
-If run with -o FILE1 -o FILE2, it outputs only the specified files.
+If run with one or more FILE arguments, it outputs only those files.
 """
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
-    parser.add_argument('-o', action='append', dest='output_files', metavar='FILE',
-                        help='Only output the specified file (can be used multiple times)', required=False)
+    parser.add_argument('files', nargs='*', metavar='FILE',
+                        help='Only output the specified file(s)')
 
     args = parser.parse_args()
 
-    if args.output_files:
-        for filepath in args.output_files:
+    if args.files:
+        for filepath in args.files:
             if not os.path.exists(filepath):
                 print(f"Error: File does not exist: {filepath}", file=sys.stderr)
                 sys.exit(1)
@@ -67,18 +67,18 @@ If run with -o FILE1 -o FILE2, it outputs only the specified files.
                 sys.exit(1)
 
     else:
-        args.output_files = find_all_text_files()
-        if not args.output_files:
+        args.files = find_all_text_files()
+        if not args.files:
             print("Error: No text files found", file=sys.stderr)
             sys.exit(1)
 
         # Sort auto-found list
-        args.output_files = sorted(args.output_files)
+        args.files = sorted(args.files)
 
     total_lines = 0
-    total_files = len(args.output_files)
+    total_files = len(args.files)
 
-    for filepath in args.output_files:
+    for filepath in args.files:
         print(f"## File `{os.path.relpath(filepath)}`")
         print()
 
