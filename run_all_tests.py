@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import shutil
 import subprocess
 import sys
 
@@ -20,19 +21,28 @@ def write_file(file_path, content):
 
 def run_test(test_dir):
     full_path = os.path.join(TESTS_DIR, test_dir)
+    cwd = os.path.join(TESTS_DIR, test_dir, 'dir')
 
     with open(os.path.join(full_path, 'run.cmd')) as f:
         cmd = f.read().strip()
 
     cmd_parts = cmd.replace('../../f2p', F2P).split()
 
+    test_gitignore_file = os.path.join(full_path, 'gitignore')
+    test_gitignore_in_cwd = os.path.join(TESTS_DIR, test_dir, 'dir', '.gitignore')
+    if os.path.exists(test_gitignore_file):
+        shutil.copy2(test_gitignore_file, test_gitignore_in_cwd)
+
     result = subprocess.run(
         cmd_parts,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        cwd=full_path,
+        cwd=cwd,
         text=True
     )
+
+    if os.path.exists(test_gitignore_in_cwd):
+        os.remove(test_gitignore_in_cwd)
 
     actual_stdout = result.stdout
     actual_stderr = result.stderr

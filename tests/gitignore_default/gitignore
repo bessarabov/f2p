@@ -1,0 +1,8 @@
+# Ignore a specific file
+ignored.txt
+
+# Ignore files with .secret extension
+*.secret
+
+# Ignore an entire directory
+ignored_dir/

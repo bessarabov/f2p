@@ -3,6 +3,8 @@
 import argparse
 import os
 import sys
+import subprocess
+from functools import lru_cache
 
 def is_text_file(filepath):
     try:
@@ -16,12 +18,63 @@ def is_text_file(filepath):
         print(f"Error reading file {filepath}: {e}", file=sys.stderr)
         return False
 
+@lru_cache(maxsize=None)
+def _git_available_and_repo():
+    """
+    Return True if `git` is available and the current directory is inside a git repo.
+    """
+    try:
+        # Check git is installed
+        subprocess.run(["git", "--version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+        # Check we're inside a work tree
+        result = subprocess.run(
+            ["git", "rev-parse", "--is-inside-work-tree"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            check=True
+        )
+        return result.stdout.strip() == "true"
+    except Exception:
+        return False
+
+@lru_cache(maxsize=2048)
+def is_ignored_by_git(path):
+    """
+    Return True if the given path is ignored by git (according to .gitignore and standard excludes).
+    If git is not available or we're not in a repo, returns False.
+    """
+    if not _git_available_and_repo():
+        return False
+
+    # git expects paths relative to repo root or absolute; relative is fine from cwd.
+    # Use --quiet to only rely on exit code: 0 = ignored, 1 = not ignored.
+    try:
+        # Ensure the path exists or is a prospective path; git check-ignore can handle both
+        result = subprocess.run(
+            ["git", "check-ignore", "-q", "--", path],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        return result.returncode == 0
+    except Exception:
+        # On any error, fall back to not ignored
+        return False
+
 def find_all_text_files():
     text_files = []
     for root, dirs, files in os.walk('.'):
-        dirs[:] = [d for d in dirs if d != '.git']  # Skip .git/
+        # Always skip .git/ folder
+        dirs[:] = [d for d in dirs
+                   if d != '.git' and not is_ignored_by_git(os.path.join(root, d))]
+
         for filename in files:
             full_path = os.path.join(root, filename)
+
+            # Skip anything ignored by git (.gitignore / excludes), if applicable
+            if is_ignored_by_git(full_path):
+                continue
+
             if os.path.isfile(full_path) and is_text_file(full_path):
                 text_files.append(full_path)
     return sorted(text_files)  # Sort alphabetically
@@ -41,7 +94,8 @@ or:
 Output the contents of text files to STDOUT.
 
 If run without arguments, it outputs all text files in
-the current directory (recursively), excluding files under .git/
+the current directory (recursively), honoring .gitignore
+(and always excluding files under .git/).
 
 If run with one or more FILE arguments, it outputs only those files.
 """
@@ -60,6 +114,9 @@ If run with one or more FILE arguments, it outputs only those files.
                 print(f"Error: File does not exist: {filepath}", file=sys.stderr)
                 sys.exit(1)
             if not os.path.isfile(filepath):
+                # Keep the trailing slash behavior consistent with provided tests
+                if os.path.isdir(filepath) and not filepath.endswith('/'):
+                    filepath = filepath + '/'
                 print(f"Error: Not a file: {filepath}", file=sys.stderr)
                 sys.exit(1)
             if not is_text_file(filepath):
@@ -95,3 +152,4 @@ If run with one or more FILE arguments, it outputs only those files.
 
 if __name__ == '__main__':
     main()
+

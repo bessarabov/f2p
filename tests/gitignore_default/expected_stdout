@@ -1,0 +1,19 @@
+## File `.gitignore`
+
+# Ignore a specific file
+ignored.txt
+
+# Ignore files with .secret extension
+*.secret
+
+# Ignore an entire directory
+ignored_dir/
+
+## File `keep.txt`
+
+keep content
+
+## File `sub/keep2.txt`
+
+keep2 content
+
