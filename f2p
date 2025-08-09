@@ -6,11 +6,11 @@ import sys
 import subprocess
 from functools import lru_cache
 
-def is_text_file(filepath):
+def is_text_utf8_file(filepath):
     try:
         with open(filepath, 'rb') as f:
-            chunk = f.read(1024)
-            chunk.decode('utf-8')  # try decoding to check if it's text
+            data = f.read()
+            data.decode('utf-8')
         return True
     except UnicodeDecodeError:
         return False
@@ -75,7 +75,7 @@ def find_all_text_files():
             if is_ignored_by_git(full_path):
                 continue
 
-            if os.path.isfile(full_path) and is_text_file(full_path):
+            if os.path.isfile(full_path) and is_text_utf8_file(full_path):
                 text_files.append(full_path)
     return sorted(text_files)  # Sort alphabetically
 
@@ -119,8 +119,8 @@ If run with one or more FILE arguments, it outputs only those files.
                     filepath = filepath + '/'
                 print(f"Error: Not a file: {filepath}", file=sys.stderr)
                 sys.exit(1)
-            if not is_text_file(filepath):
-                print(f"Error: File is not a text file: {filepath}", file=sys.stderr)
+            if not is_text_utf8_file(filepath):
+                print(f"Error: File is not a text utf-8 file: {filepath}", file=sys.stderr)
                 sys.exit(1)
 
     else:
