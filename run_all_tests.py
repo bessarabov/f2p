@@ -62,7 +62,6 @@ def run_test(test_dir, verbose=False):
         print(f"[ OK ] {test_dir}")
         return True
 
-    # Failure
     print(f"[FAIL] {test_dir}")
     if verbose:
         if stdout_mismatch:
@@ -83,18 +82,39 @@ def run_test(test_dir, verbose=False):
             print(actual_stderr)
     return False
 
+def list_available_tests():
+    return sorted(
+        d for d in os.listdir(TESTS_DIR)
+        if os.path.isdir(os.path.join(TESTS_DIR, d))
+    )
+
 def main():
     parser = argparse.ArgumentParser(description="Run f2p tests")
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Show detailed diffs for failures')
+    parser.add_argument('-t', '--test', metavar='TEST_DIR', default=None,
+                        help='Run only the specified test directory under tests/')
     args = parser.parse_args()
 
-    test_dirs = [d for d in os.listdir(TESTS_DIR)
-                 if os.path.isdir(os.path.join(TESTS_DIR, d))]
+    if args.test:
+        candidate = os.path.join(TESTS_DIR, args.test)
+        if not os.path.isdir(candidate):
+            print(f"Error: test '{args.test}' not found under {TESTS_DIR}", file=sys.stderr)
+            avail = list_available_tests()
+            if avail:
+                print("Available tests:", file=sys.stderr)
+                for name in avail:
+                    print(f"  - {name}", file=sys.stderr)
+            else:
+                print("No tests found.", file=sys.stderr)
+            sys.exit(2)
+        test_dirs = [args.test]
+    else:
+        test_dirs = list_available_tests()
 
     succeeded = 0
     failed = 0
-    for td in sorted(test_dirs):
+    for td in test_dirs:
         if run_test(td, verbose=args.verbose):
             succeeded += 1
         else:
