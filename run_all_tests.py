@@ -21,7 +21,7 @@ def write_file(file_path, content):
     with open(file_path, 'w', encoding='utf-8') as f:
         f.write(content)
 
-def run_test(test_dir, verbose=False):
+def run_test(test_dir, verbose=False, update=False):
     full_path = os.path.join(TESTS_DIR, test_dir)
     cwd = os.path.join(TESTS_DIR, test_dir, 'dir')
 
@@ -35,13 +35,23 @@ def run_test(test_dir, verbose=False):
     if os.path.exists(test_gitignore_file):
         shutil.copy2(test_gitignore_file, test_gitignore_in_cwd)
 
-    result = subprocess.run(
-        cmd_parts,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        cwd=cwd,
-        text=True
-    )
+    try:
+        result = subprocess.run(
+            cmd_parts,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=cwd,
+            text=True
+        )
+    except Exception as e:
+        # Could not execute command at all
+        if os.path.exists(test_gitignore_in_cwd):
+            os.remove(test_gitignore_in_cwd)
+        if update:
+            print(f"[FAIL] {test_dir} (update failed: {e})")
+        else:
+            print(f"[FAIL] {test_dir} (exec error: {e})")
+        return False
 
     if os.path.exists(test_gitignore_in_cwd):
         os.remove(test_gitignore_in_cwd)
@@ -51,6 +61,14 @@ def run_test(test_dir, verbose=False):
 
     file_expected_stdout = os.path.join(full_path, 'expected_stdout')
     file_expected_stderr = os.path.join(full_path, 'expected_stderr')
+
+    if update:
+        # Overwrite expectations with current outputs
+        write_file(file_expected_stdout, actual_stdout)
+        write_file(file_expected_stderr, actual_stderr)
+        print(f"[UPD ] {test_dir}")
+        return True
+
     expected_stdout = read_file_contents(file_expected_stdout)
     expected_stderr = read_file_contents(file_expected_stderr)
 
@@ -94,6 +112,8 @@ def main():
                         help='Show detailed diffs for failures')
     parser.add_argument('-t', '--test', metavar='TEST_DIR', default=None,
                         help='Run only the specified test directory under tests/')
+    parser.add_argument('-u', '--update', action='store_true',
+                        help='Overwrite expected_stdout and expected_stderr with actual outputs for the selected test(s) (“bless” mode).')
     args = parser.parse_args()
 
     if args.test:
@@ -115,7 +135,7 @@ def main():
     succeeded = 0
     failed = 0
     for td in test_dirs:
-        if run_test(td, verbose=args.verbose):
+        if run_test(td, verbose=args.verbose, update=args.update):
             succeeded += 1
         else:
             failed += 1
@@ -126,7 +146,11 @@ def main():
         sys.exit(1)
     else:
         print(f"\n{succeeded} test(s) succeeded.")
-        print("All tests passed.")
+        if args.update:
+            print("All tests updated.")
+        else:
+            print("All tests passed.")
 
 if __name__ == '__main__':
     main()
+
