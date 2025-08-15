@@ -114,7 +114,6 @@ If run with one or more FILE arguments, it outputs only those files.
                 print(f"Error: File does not exist: {filepath}", file=sys.stderr)
                 sys.exit(1)
             if not os.path.isfile(filepath):
-                # Keep the trailing slash behavior consistent with provided tests
                 if os.path.isdir(filepath) and not filepath.endswith('/'):
                     filepath = filepath + '/'
                 print(f"Error: Not a file: {filepath}", file=sys.stderr)
