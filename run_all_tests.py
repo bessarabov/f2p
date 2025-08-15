@@ -22,45 +22,47 @@ def write_file(file_path, content):
         f.write(content)
 
 def run_test(test_dir, verbose=False, update=False):
-    full_path = os.path.join(TESTS_DIR, test_dir)
-    cwd = os.path.join(TESTS_DIR, test_dir, 'dir')
+    test_dir_full_path = os.path.join(TESTS_DIR, test_dir)
+    original_dir_full_path = os.path.join(test_dir_full_path, 'dir')
+    working_dir_full_path = os.path.join(test_dir_full_path, 'working_dir')
 
-    with open(os.path.join(full_path, 'run.cmd')) as f:
+    shutil.copytree(original_dir_full_path, working_dir_full_path)
+
+    with open(os.path.join(test_dir_full_path, 'run.cmd')) as f:
         cmd = f.read().strip()
 
     cmd_parts = shlex.split(cmd.replace('../../f2p', F2P))
 
-    test_gitignore_file = os.path.join(full_path, 'gitignore')
-    test_gitignore_in_cwd = os.path.join(TESTS_DIR, test_dir, 'dir', '.gitignore')
+    test_gitignore_file = os.path.join(test_dir_full_path, 'gitignore')
+    test_gitignore_in_working_dir = os.path.join(working_dir_full_path, '.gitignore')
     if os.path.exists(test_gitignore_file):
-        shutil.copy2(test_gitignore_file, test_gitignore_in_cwd)
+        shutil.copy2(test_gitignore_file, test_gitignore_in_working_dir)
 
     try:
         result = subprocess.run(
             cmd_parts,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            cwd=cwd,
+            cwd=working_dir_full_path,
             text=True
         )
     except Exception as e:
         # Could not execute command at all
-        if os.path.exists(test_gitignore_in_cwd):
-            os.remove(test_gitignore_in_cwd)
+        if os.path.exists(test_gitignore_in_working_dir):
+            os.remove(test_gitignore_in_working_dir)
         if update:
             print(f"[FAIL] {test_dir} (update failed: {e})")
         else:
             print(f"[FAIL] {test_dir} (exec error: {e})")
         return False
 
-    if os.path.exists(test_gitignore_in_cwd):
-        os.remove(test_gitignore_in_cwd)
+    shutil.rmtree(working_dir_full_path)
 
     actual_stdout = result.stdout
     actual_stderr = result.stderr
 
-    file_expected_stdout = os.path.join(full_path, 'expected_stdout')
-    file_expected_stderr = os.path.join(full_path, 'expected_stderr')
+    file_expected_stdout = os.path.join(test_dir_full_path, 'expected_stdout')
+    file_expected_stderr = os.path.join(test_dir_full_path, 'expected_stderr')
 
     if update:
         # Overwrite expectations with current outputs
