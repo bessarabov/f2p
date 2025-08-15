@@ -7,8 +7,8 @@ import sys
 import argparse
 import shlex
 
-TESTS_DIR = os.path.abspath(os.path.dirname(__file__)) + '/tests/'
-F2P = os.path.abspath(os.path.join(TESTS_DIR, '..', 'f2p'))
+ROOT_DIR = os.path.abspath(os.path.dirname(__file__)) + '/'
+TESTS_DIR = ROOT_DIR + 'tests/'
 
 def read_file_contents(file_path):
     try:
@@ -31,7 +31,8 @@ def run_test(test_dir, verbose=False, update=False):
     with open(os.path.join(test_dir_full_path, 'run.cmd')) as f:
         cmd = f.read().strip()
 
-    cmd_parts = shlex.split(cmd.replace('../../f2p', F2P))
+    cmd = ROOT_DIR + cmd
+    cmd_parts = shlex.split(cmd)
 
     test_gitignore_file = os.path.join(test_dir_full_path, 'gitignore')
     test_gitignore_in_working_dir = os.path.join(working_dir_full_path, '.gitignore')

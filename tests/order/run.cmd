@@ -1,1 +1,1 @@
-../../f2p xxx.txt aaa.txt
+f2p xxx.txt aaa.txt

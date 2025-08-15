@@ -19,7 +19,8 @@ or:
 Output the contents of text files to STDOUT.
 
 If run without arguments, it outputs all text files in
-the current directory (recursively), excluding files under .git/
+the current directory (recursively), honoring .gitignore
+(and always excluding files under .git/).
 
 If run with one or more FILE arguments, it outputs only those files.
 
