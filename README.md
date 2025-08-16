@@ -14,19 +14,19 @@ usage:
 
 or:
 
-    f2p [FILE ...]
+    f2p [FILE_OR_DIR ...]
 
 Output the contents of text files to STDOUT.
 
-If run without arguments, it outputs all text files in
-the current directory (recursively), honoring .gitignore
-(and always excluding files under .git/).
-
-If run with one or more FILE arguments, it outputs only those files.
+If run without arguments, it recursively finds and outputs
+all text UTF-8 files in the current directory, respecting .gitignore
+and excluding files under .git/
 
 positional arguments:
-  FILE        Only output the specified file(s)
+  FILE_OR_DIR  Can be specified zero or more times. Files are output as-is;
+               directories are searched recursively for text UTF-8 files,
+               respecting .gitignore
 
 optional arguments:
-  -h, --help  show this help message and exit
+  -h, --help   show this help message and exit
 ```

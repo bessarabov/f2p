@@ -87,40 +87,59 @@ def main():
 
 or:
 
-    f2p [FILE ...]
+    f2p [FILE_OR_DIR ...]
 """,
         description=(
 """
 Output the contents of text files to STDOUT.
 
-If run without arguments, it outputs all text files in
-the current directory (recursively), honoring .gitignore
-(and always excluding files under .git/).
-
-If run with one or more FILE arguments, it outputs only those files.
+If run without arguments, it recursively finds and outputs
+all text UTF-8 files in the current directory, respecting .gitignore
+and excluding files under .git/
 """
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
-    parser.add_argument('files', nargs='*', metavar='FILE',
-                        help='Only output the specified file(s)')
+    parser.add_argument('files', nargs='*', metavar='FILE_OR_DIR',
+                        help='Can be specified zero or more times. Files are output as-is; '
+                             'directories are searched recursively for text UTF-8 files, '
+                             'respecting .gitignore')
 
     args = parser.parse_args()
 
+    def find_text_files_under(root_dir):
+        collected = []
+        for r, dirs, files in os.walk(root_dir):
+            # skip .git and ignored dirs
+            dirs[:] = [d for d in dirs
+                       if d != '.git' and not is_ignored_by_git(os.path.join(r, d))]
+            for fn in files:
+                fp = os.path.join(r, fn)
+                if is_ignored_by_git(fp):
+                    continue
+                if os.path.isfile(fp) and is_text_utf8_file(fp):
+                    collected.append(fp)
+        return sorted(collected)
+
+    expanded_paths = []
     if args.files:
-        for filepath in args.files:
-            if not os.path.exists(filepath):
-                print(f"Error: File does not exist: {filepath}", file=sys.stderr)
+        for arg in args.files:
+            if not os.path.exists(arg):
+                print(f"Error: File does not exist: {arg}", file=sys.stderr)
                 sys.exit(1)
-            if not os.path.isfile(filepath):
-                if os.path.isdir(filepath) and not filepath.endswith('/'):
-                    filepath = filepath + '/'
-                print(f"Error: Not a file: {filepath}", file=sys.stderr)
+            if os.path.isdir(arg):
+                # Gather text files under this dir, sorted locally
+                expanded_paths.extend(find_text_files_under(arg))
+            elif os.path.isfile(arg):
+                if not is_text_utf8_file(arg):
+                    print(f"Error: File is not a text utf-8 file: {arg}", file=sys.stderr)
+                    sys.exit(1)
+                expanded_paths.append(arg)
+            else:
+                print(f"Error: Not a file: {arg}", file=sys.stderr)
                 sys.exit(1)
-            if not is_text_utf8_file(filepath):
-                print(f"Error: File is not a text utf-8 file: {filepath}", file=sys.stderr)
-                sys.exit(1)
+        args.files = expanded_paths
 
     else:
         args.files = find_all_text_files()
