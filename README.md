@@ -2,12 +2,12 @@
 
 ## Installation
 
-Simply copy the f2p file from this repository and make it executable.
+Simply copy the `f2p` file from this repository and make it executable.
 
 ## Usage
 
 ```
-$ ./f2p --help
+$ f2p --help
 usage:
 
     f2p
