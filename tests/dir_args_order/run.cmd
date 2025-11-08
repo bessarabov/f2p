@@ -1,1 +1,1 @@
-f2p dir1/ dir2/ file.txt
+f2p dir1/ dir2/ file.txt --to=stdout

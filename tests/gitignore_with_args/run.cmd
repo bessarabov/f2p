@@ -1,1 +1,1 @@
-f2p ignored.txt
+f2p ignored.txt --to=stdout

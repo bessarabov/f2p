@@ -1,1 +1,1 @@
-f2p
+f2p --to=stdout

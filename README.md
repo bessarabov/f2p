@@ -23,10 +23,13 @@ all text UTF-8 files in the current directory, respecting .gitignore
 and excluding files under .git/
 
 positional arguments:
-  FILE_OR_DIR  Can be specified zero or more times. Files are output as-is;
-               directories are searched recursively for text UTF-8 files,
-               respecting .gitignore
+  FILE_OR_DIR           Can be specified zero or more times. Files are output
+                        as-is; directories are searched recursively for text
+                        UTF-8 files, respecting .gitignore
 
 optional arguments:
-  -h, --help   show this help message and exit
+  -h, --help            show this help message and exit
+  --to {clipboard,stdout}
+                        Destination for output. Default is clipboard (macOS
+                        pbcopy)
 ```

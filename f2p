@@ -4,6 +4,7 @@ import argparse
 import os
 import sys
 import subprocess
+import shutil
 from functools import lru_cache
 
 def is_text_utf8_file(filepath):
@@ -105,6 +106,8 @@ and excluding files under .git/
                         help='Can be specified zero or more times. Files are output as-is; '
                              'directories are searched recursively for text UTF-8 files, '
                              'respecting .gitignore')
+    parser.add_argument('--to', choices=['clipboard', 'stdout'], default='clipboard',
+                        help='Destination for output. Default is clipboard (macOS pbcopy)')
 
     args = parser.parse_args()
 
@@ -153,16 +156,29 @@ and excluding files under .git/
     total_lines = 0
     total_files = len(args.files)
 
-    for filepath in args.files:
-        print(f"## File `{os.path.relpath(filepath)}`")
-        print()
+    # Collect output into buffer first (we must feed pbcopy at once)
+    out_lines = []
 
+    for filepath in args.files:
+        out_lines.append(f"## File `{os.path.relpath(filepath)}`\n\n")
         with open(filepath, "r", encoding="utf-8") as f:
             for line in f:
-                print(line, end="")
+                out_lines.append(line)
                 total_lines += 1
-        print()
+        out_lines.append("\n")
         total_lines += 3
+
+    output_text = ''.join(out_lines)
+
+    if args.to == 'clipboard':
+        if shutil.which('pbcopy') is None:
+            print("Warning: pbcopy not found, writing to stdout instead.", file=sys.stderr)
+            sys.stdout.write(output_text)
+        else:
+            proc = subprocess.Popen(['pbcopy'], stdin=subprocess.PIPE)
+            proc.communicate(input=output_text.encode('utf-8'))
+    else:
+        sys.stdout.write(output_text)
 
     plural_f = "s" if total_files != 1 else ""
     plural_l = "s" if total_lines != 1 else ""
