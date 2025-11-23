@@ -17,7 +17,7 @@ class StableArgumentParser(argparse.ArgumentParser):
         self.print_usage = lambda *a, **k: None
         # Print error and exit with code 2
         print(f"{self.prog}: error: {message}", file=sys.stderr)
-        sys.exit(2)
+        sys.exit(1)
 
     def _check_value(self, action, value):
         # Stable invalid-choice formatting
