@@ -7,6 +7,28 @@ import subprocess
 import shutil
 from functools import lru_cache
 
+class StableArgumentParser(argparse.ArgumentParser):
+    """
+    ArgumentParser with stable error messages for choices, so tests don't
+    depend on Python's internal formatting (which can differ by version).
+    """
+
+    def _check_value(self, action, value):
+        # Intercept invalid choice errors and format them ourselves
+        if action.choices is not None and value not in action.choices:
+            option = action.option_strings[-1] if action.option_strings else action.dest
+            # Keep order and quoting deterministic: 'clipboard', 'stdout'
+            choices_str = ", ".join(repr(c) for c in action.choices)
+            message = (
+                f"argument {option}: invalid choice: {value!r} "
+                f"(choose from {choices_str})"
+            )
+            # Delegate to the normal error handler (prints usage + message, exits 2)
+            self.error(message)
+
+        # Valid value or no choices: fall back to default behavior
+        return super()._check_value(action, value)
+
 def is_text_utf8_file(filepath):
     try:
         with open(filepath, 'rb') as f:
@@ -81,7 +103,8 @@ def find_all_text_files():
     return sorted(text_files)  # Sort alphabetically
 
 def main():
-    parser = argparse.ArgumentParser(
+    parser = StableArgumentParser(
+        prog="f2p",
         usage="""
 
     f2p
