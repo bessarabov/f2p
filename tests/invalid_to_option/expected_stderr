@@ -1,8 +1,1 @@
-usage: 
-
-    f2p
-
-or:
-
-    f2p [FILE_OR_DIR ...]
 f2p: error: argument --to: invalid choice: 'asdf' (choose from 'clipboard', 'stdout')
