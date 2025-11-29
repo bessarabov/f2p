@@ -67,7 +67,8 @@ The absence of versioning is intentional: I don't want to spend time
 maintaining a changelog, and I don't want to depend on past versions. I'm
 completely fine making backward-incompatible changes whenever I feel they are
 necessary. If you start using this script, be aware that I may change it in
-ways that make sense for me but break your workflow.
+ways that make sense for me but break your workflow (as brilliantly
+illustrated in the xkcd comic 1172, "[Every change breaks someone’s workflow](https://xkcd.com/1172/)").
 
 The script is open source under the MIT License. If you find it useful, the
 best approach is probably to fork it and adapt it in whatever direction fits
