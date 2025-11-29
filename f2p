@@ -186,7 +186,12 @@ outputs them to the clipboard.
     out_lines = []
 
     for filepath in args.files:
-        out_lines.append(f"## File `{os.path.relpath(filepath)}`\n\n")
+        if os.path.isabs(filepath):
+            display_path = filepath
+        else:
+            display_path = os.path.relpath(filepath)
+
+        out_lines.append(f"## File `{display_path}`\n\n")
         with open(filepath, "r", encoding="utf-8") as f:
             for line in f:
                 out_lines.append(line)
