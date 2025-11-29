@@ -118,11 +118,13 @@ or:
 """,
         description=(
 """
-Output the contents of text UTF-8 files, by default copy it to the clipboard.
+Output the contents of UTF-8 text files.
 
-If run without arguments, it recursively finds all text UTF-8 files in the
-current directory, respecting .gitignore and excluding files under .git/, and
-outputs them to the clipboard.
+If run without arguments, it recursively finds all UTF-8 text files in the
+current directory (respecting .gitignore and excluding .git/).
+
+When writing to a terminal, output goes to the clipboard by default (can be changed with --to).
+When piped or redirected, output goes to stdout by default.
 """
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter
@@ -132,10 +134,27 @@ outputs them to the clipboard.
                         help='Can be specified zero or more times. Files are output as-is; '
                              'directories are searched recursively for text UTF-8 files, '
                              'respecting .gitignore')
-    parser.add_argument('--to', choices=['clipboard', 'stdout'], default='clipboard',
-                        help='Destination for output. Default is clipboard (macOS pbcopy)')
+    parser.add_argument(
+        '--to',
+        choices=['clipboard', 'stdout'],
+        default=None,
+        help=(
+            'Destination for output. When writing to a terminal, the '
+            'default is clipboard (pbcopy). When the output is piped or redirected, '
+            'the default is stdout.'
+        ),
+    )
 
     args = parser.parse_args()
+
+    # If user did not explicitly set --to, choose default based on whether stdout is a TTY.
+    # - When writing to a terminal: use clipboard (pbcopy).
+    # - When piped/redirected (e.g. `f2p | cat`): use stdout.
+    if args.to is None:
+        if sys.stdout.isatty():
+            args.to = 'clipboard'
+        else:
+            args.to = 'stdout'
 
     def find_text_files_under(root_dir):
         collected = []

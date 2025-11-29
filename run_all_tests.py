@@ -5,7 +5,6 @@ import shutil
 import subprocess
 import sys
 import argparse
-import shlex
 
 ROOT_DIR = os.path.abspath(os.path.dirname(__file__)) + '/'
 TESTS_DIR = ROOT_DIR + 'tests/'
@@ -34,12 +33,13 @@ def run_test(test_dir, verbose=False, update=False):
     original_dir = os.path.join(test_path, 'dir')
     working_dir = os.path.join(test_path, 'working_dir')
 
+    if os.path.exists(working_dir):
+        shutil.rmtree(working_dir)
+
     shutil.copytree(original_dir, working_dir)
 
     with open(os.path.join(test_path, 'run.cmd')) as f:
         cmd = ROOT_DIR + f.read().strip()
-
-    cmd_parts = shlex.split(cmd)
 
     gitignore_src = os.path.join(test_path, 'gitignore')
     gitignore_dst = os.path.join(working_dir, '.gitignore')
@@ -48,11 +48,12 @@ def run_test(test_dir, verbose=False, update=False):
 
     try:
         result = subprocess.run(
-            cmd_parts,
+            cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             cwd=working_dir,
-            text=True
+            text=True,
+            shell=True,
         )
     except Exception as e:
         if os.path.exists(gitignore_dst):
