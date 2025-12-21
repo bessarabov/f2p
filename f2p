@@ -7,6 +7,8 @@ import subprocess
 import shutil
 from functools import lru_cache
 
+MAX_LINE_LENGTH = 2000
+
 class StableArgumentParser(argparse.ArgumentParser):
     """
     ArgumentParser with stable error messages for choices, and without printing usage on errors.
@@ -32,17 +34,43 @@ class StableArgumentParser(argparse.ArgumentParser):
 
         return super()._check_value(action, value)
 
-def is_text_utf8_file(filepath):
+
+def _classify_text_utf8_file(filepath):
+    """
+    Classify file for f2p purposes.
+
+    Returns:
+      'ok'        - UTF-8 text, all lines <= MAX_LINE_LENGTH
+      'not_text'  - not UTF-8 text / could not be read
+      'too_long'  - at least one line is longer than MAX_LINE_LENGTH
+    """
     try:
         with open(filepath, 'rb') as f:
             data = f.read()
-            data.decode('utf-8')
-        return True
-    except UnicodeDecodeError:
-        return False
+        try:
+            text = data.decode('utf-8')
+        except UnicodeDecodeError:
+            return 'not_text'
+
+        # Exclude files that contain very long lines
+        for line in text.splitlines():
+            if len(line) > MAX_LINE_LENGTH:
+                return 'too_long'
+
+        return 'ok'
     except Exception as e:
         print(f"Error reading file {filepath}: {e}", file=sys.stderr)
-        return False
+        return 'not_text'
+
+
+def is_text_utf8_file(filepath):
+    """
+    Return True if file is acceptable for f2p:
+      - decodable as UTF-8
+      - no line longer than MAX_LINE_LENGTH characters
+    """
+    return _classify_text_utf8_file(filepath) == 'ok'
+
 
 @lru_cache(maxsize=None)
 def _git_available_and_repo():
@@ -180,8 +208,15 @@ When piped or redirected, output goes to stdout by default.
                 # Gather text files under this dir, sorted locally
                 expanded_paths.extend(find_text_files_under(arg))
             elif os.path.isfile(arg):
-                if not is_text_utf8_file(arg):
+                classification = _classify_text_utf8_file(arg)
+                if classification == 'not_text':
                     print(f"Error: File is not a text utf-8 file: {arg}", file=sys.stderr)
+                    sys.exit(1)
+                if classification == 'too_long':
+                    print(
+                        f"Error: File has a line longer than {MAX_LINE_LENGTH} characters: {arg}",
+                        file=sys.stderr
+                    )
                     sys.exit(1)
                 expanded_paths.append(arg)
             else:
